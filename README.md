@@ -1,6 +1,6 @@
 # Spark Compaction
 When streaming data into HDFS, small messages are written to a large number of files that if left unchecked will cause unnecessary strain on the HDFS NameNode.  To handle this situation, it is good practice to run a compaction job on directories that contain many small files to help reduce the resource strain of the NameNode by ensuring HDFS blocks are filled efficiently.  It is common practice to do this type of compaction with MapReduce or on Hive tables / partitions and this tool is designed to accomplish the same type of task utilizing Spark.
-
+As a side effect the tool can also be used to convert from avro to parquet and back.
 
 ## Compression Math
 
