@@ -201,21 +201,23 @@ public class Compact {
     	// Defining Spark Context with a generic Spark Configuration.
         SparkConf sparkConf = new SparkConf().setAppName("Spark Compaction");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
-                
-        if (this.outputSerialization.equals(TEXT)) {
-            JavaRDD<String> textFile = sc.textFile(this.concatInputPath(inputPath));
-            textFile.coalesce(this.splitSize).saveAsTextFile(outputPath);
-        } else if (this.outputSerialization.equals(PARQUET)) {
-            SQLContext sqlContext = new SQLContext(sc);
-            DataFrame parquetFile = sqlContext.read().parquet(this.concatInputPath(inputPath));
-            parquetFile.coalesce(this.splitSize).write().parquet(outputPath);
-        } else if (this.outputSerialization.equals(AVRO)) {
-            // For this to work the files must end in .avro
-            SQLContext sqlContext = new SQLContext(sc);
-            DataFrame avroFile = sqlContext.read().format("com.databricks.spark.avro").load(this.concatInputPath(inputPath));
-            avroFile.coalesce(this.splitSize).write().format("com.databricks.spark.avro").save(outputPath);
+        SQLContext sqlContext = new SQLContext(sc);
+	DataFrame df = null;
+        if (this.inputSerialization.equals(PARQUET)) {
+            df = sqlContext.read().parquet(this.concatInputPath(inputPath));
+        } else if (this.inputSerialization.equals(AVRO)) {
+            df = sqlContext.read().format("com.databricks.spark.avro").load(this.concatInputPath(inputPath));
         } else {
-            System.out.println("Did not match any serialization type: text, parquet, or avro.  Recieved: " +
+            System.out.println("Did not match any input serialization type: parquet or avro.  Received: " +
+                    this.outputSerialization);
+        }
+                
+        if (this.outputSerialization.equals(PARQUET)) {
+            df.coalesce(this.splitSize).write().parquet(outputPath);
+        } else if (this.outputSerialization.equals(AVRO)) {
+            df.coalesce(this.splitSize).write().format("com.databricks.spark.avro").save(outputPath);
+        } else {
+            System.out.println("Did not match any output serialization type: parquet or avro.  Received: " +
                     this.outputSerialization);
         }
     }
